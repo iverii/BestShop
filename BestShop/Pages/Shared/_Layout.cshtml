@@ -1,0 +1,184 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Book Shop</title>
+    <link rel="icon" href="/images/bookIcon.png"/>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/BestShop.styles.css" asp-append-version="true" />
+    <!-- Option 1: Include in HTML -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css">
+</head>
+
+<script>
+    function addToCart(button, bookID) {
+        let oldCartValue = getCookieValue("shopping_cart");
+        if (oldCartValue) { oldCartValue += "-"; };
+        let newCartValue = oldCartValue + bookID;
+
+        //update cookie value
+
+        let d = new Date();
+        d.setDate(d.getDate() + 365); // cookie will expire after  1 year
+        let expires = d.toUTCString();
+        document.cookie = "shopping_cart=" + newCartValue + ";expires" + expires + ";path=/";
+
+        // update the number of books in the shopping cart
+        let booksArray = newCartValue.split("-");
+        let count = booksArray.length;
+
+        document.getElementById("BookCountBadge").innerHTML = count;
+
+        button.innerHTML = "Added <i class='bi bi-check-lg'></i>";
+    }
+
+    function getCookieValue(cookieName) {
+        // document.cookie
+
+        let cookieArray = document.cookie.split(';')
+
+        for (let i = 0; i < cookieArray.length; i++) {
+            let cookie = cookieArray[i];
+            if (cookie.includes(cookieName)) {
+                let name_value = cookie.split('=');
+                return name_value[1];
+            }
+        }
+
+        return "";
+    }
+</script>
+
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow">
+            <div class="container">
+                <a class="navbar-brand" asp-area="" asp-page="/Index">
+                    <img src="/images/bookIcon.png" width="30" height="30" alt=""/> Book Shop
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                    <ul class="navbar-nav flex-grow-1">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-page="/Books">Books</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-page="/Contact">Contact</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
+                        </li>
+                    </ul>
+
+                    @{
+                        // if cookie == null cookieValue = ""
+                        string cookieValue = Context.Request.Cookies["shopping_cart"]?? "";
+                        int cartSize = 0;
+                        if(cookieValue.Length > 0)
+                        {
+                            cartSize = cookieValue.Split('-').Length;
+                        }
+                    }
+
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark me-2" asp-area="" asp-page="/Cart">
+                                <i class="bi bi-cart4 text-danger h3"></i>
+                                <span id="BookCountBadge" class="badge bg-danger" style="vertical-align: top;">
+                                    @cartSize
+                                </span>
+                            </a>
+                        </li>
+                    </ul>
+
+                    <ul class="navbar-nav">
+                        @if (Context.Session.GetString("role") == null)
+                        {
+                            <li class="nav-item">
+                                <a class="btn btn-outline-primary me-2" asp-area="" asp-page="/Auth/Register">Register</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="btn btn-primary" asp-area="" asp-page="/Auth/Login">Login</a>
+                            </li>
+                        }
+                        else if (Context.Session.GetString("role").Equals("admin"))
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Admin
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" asp-page="/Admin/Messages/Index">Messages</a></li>
+                                    <li><a class="dropdown-item" asp-page="/Admin/Books/Index">Books</a></li>
+                                    <li><a class="dropdown-item" asp-page="/Profile">Profile</a></li>
+                                    <li><a class="dropdown-item" asp-page="/Admin/Users/Index">Users</a></li>
+                                    <li><a class="dropdown-item" asp-page="/Admin/Orders/Index">Orders</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" asp-page="/Auth/Logout">Logout</a></li>
+                                </ul>
+                            </li>
+                        }
+
+                        else if (Context.Session.GetString("role").Equals("client"))
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Client
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" asp-page="/Client/Orders/Index">Orders</a></li>
+                                    <li><a class="dropdown-item" asp-page="/Profile">Profile</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" asp-page="/Auth/Logout">Logout</a></li>
+                                </ul>
+                            </li>
+                        }
+
+
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    @if (ViewData["NoContainer"] == null)
+    {
+        <div class="container mt-3">
+            <main role="main" class="pb-3">
+                @RenderBody()
+            </main>
+        </div>
+    }
+    else
+    {
+        @RenderBody()
+
+    }
+
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2024 - Book Shop - <a asp-area="" asp-page="/Privacy">Privacy</a>
+        </div>
+    </footer>
+
+    
+
+
+        
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
